@@ -5,7 +5,14 @@ import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import Dashboard from './pages/Dashboard'
 import AdminRoles from './components/AdminRoles'
-
+import Pacientes from './pages/Pacientes'
+import PacienteForm from './pages/PacienteForm'
+import PacienteDetalle from './pages/PacienteDetalle'
+import AdminAsignaciones from './pages/AdminAsignaciones' 
+import AdminProfesionales from './pages/AdminProfesionales'
+import Citas from './pages/Citas'
+import CitaForm from './pages/CitaForm'
+import NotaCita from './pages/NotaCita'
 // Evita que alguien con sesión ya iniciada vea /login o /signup
 function GuestOnly({ children }) {
   const { session, loading } = useAuth()
@@ -49,6 +56,58 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin/profesionales"
+        element={
+          <ProtectedRoute rolesPermitidos={['admin']}>
+            <AdminProfesionales />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pacientes"
+        element={
+          <ProtectedRoute>
+            <Pacientes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pacientes/nuevo"
+        element={
+          <ProtectedRoute rolesPermitidos={['admin']}>
+            <PacienteForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pacientes/:id"
+        element={
+          <ProtectedRoute>
+            <PacienteDetalle />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pacientes/:id/editar"
+        element={
+          <ProtectedRoute>
+            <PacienteForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+  path="/admin/asignaciones"
+  element={
+    <ProtectedRoute rolesPermitidos={['admin']}>
+      <AdminAsignaciones />
+    </ProtectedRoute>
+  }
+/>
+<Route path="/citas" element={<ProtectedRoute><Citas /></ProtectedRoute>} />
+<Route path="/citas/nueva" element={<ProtectedRoute><CitaForm /></ProtectedRoute>} />
+<Route path="/citas/:id/editar" element={<ProtectedRoute><CitaForm /></ProtectedRoute>} />
+<Route path="/citas/:id/nota" element={<ProtectedRoute><NotaCita /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

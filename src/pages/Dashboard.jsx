@@ -13,10 +13,22 @@ export default function Dashboard() {
       </p>
 
       {role === 'admin' && (
-        <p>
-          <Link to="/admin/roles">Ir a asignación de roles</Link>
-        </p>
+        <div>
+          <p>
+            <Link to="/admin/roles">Ir a asignación de roles</Link>
+          </p>
+          <p>
+            <Link to="/admin/asignaciones">Ir a asignación de profesionales</Link>
+          </p>
+          <p>
+            <Link to="/admin/profesionales">Administrar catálogo de profesionales</Link>
+          </p>
+        </div>
       )}
+
+      <p>
+        <Link to="/citas/nueva">Crear una cita</Link>
+      </p>
 
       {/* Aquí van los links a pacientes / agenda / notas cuando existan */}
 
