@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 
 export default function LoginForm() {
@@ -52,6 +53,9 @@ export default function LoginForm() {
       <button type="submit" disabled={loading}>
         {loading ? 'Entrando...' : 'Entrar'}
       </button>
+      <p style={{ marginTop: 12 }}>
+        ¿No tienes cuenta? <Link to="/signup">Crear cuenta</Link>
+      </p>
     </form>
   )
 }
