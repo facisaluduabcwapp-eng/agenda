@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import FormPage from '../components/layout/FormPage'
 
 export default function AdminAsignaciones() {
   const [pacientes, setPacientes] = useState([])
@@ -119,11 +120,14 @@ export default function AdminAsignaciones() {
     setInfo(`Asignación eliminada · ${new Date().toISOString()}`)
   }
 
-  if (loadingListas) return <p>Cargando...</p>
+  if (loadingListas) return <FormPage title="Asignaciones" description="Cargando pacientes y profesionales..." />
 
   return (
-    <div style={{ maxWidth: 560, margin: '2rem auto' }}>
-      <h1>Asignar pacientes a profesionales</h1>
+    <FormPage
+      eyebrow="Administración"
+      title="Asignar pacientes a profesionales"
+      description="Gestiona las asignaciones multidisciplinarias del expediente."
+    >
       <p style={{ color: '#555' }}>
         Solo el admin puede crear o quitar asignaciones (policy{' '}
         <code>paciente_profesional_admin_write</code>).
@@ -212,6 +216,6 @@ export default function AdminAsignaciones() {
 
       {error && <p style={{ color: 'crimson', marginTop: 12 }}>{error}</p>}
       {info && <p style={{ color: 'seagreen', marginTop: 12 }}>{info}</p>}
-    </div>
+    </FormPage>
   )
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import FormPage from '../components/layout/FormPage'
 
 const emptyForm = {
   nombre: '',
@@ -67,27 +68,12 @@ export default function PacienteForm() {
     } else {
       const { data: userData } = await supabase.auth.getUser()
 
-      // --- DEBUG TEMPORAL: borrar esto cuando quede resuelto ---
-      const { data: sessionCheck } = await supabase.auth.getSession()
-      console.log('DEBUG session.access_token existe:', !!sessionCheck.session?.access_token)
-      console.log('DEBUG session.user.id:', sessionCheck.session?.user?.id)
-      console.log('DEBUG userData.user.id:', userData.user?.id)
-      const { data: whoami, error: whoamiError } = await supabase.rpc('debug_whoami')
-      console.log('DEBUG whoami:', whoami, whoamiError)
-      // --- fin debug temporal ---
-
       result = await supabase
         .from('pacientes')
         .insert({ ...payload, creado_por: userData.user.id })
         .select()
         .single()
     }
-
-    // --- DEBUG TEMPORAL: borrar esto cuando quede resuelto ---
-    if (result.error) {
-      console.log('DEBUG error completo:', JSON.stringify(result.error, null, 2))
-    }
-    // --- fin debug temporal ---
 
     setSaving(false)
 
@@ -99,11 +85,20 @@ export default function PacienteForm() {
     navigate(isEditing ? `/pacientes/${id}` : `/pacientes/${result.data.id}`)
   }
 
-  if (loading) return <p>Cargando...</p>
+  if (loading) {
+    return (
+      <FormPage title="Paciente" description="Cargando información del paciente...">
+        <p style={{ padding: '2rem' }}>Cargando paciente...</p>
+      </FormPage>
+    )
+  }
 
   return (
-    <div style={{ maxWidth: 480, margin: '2rem auto' }}>
-      <h1>{isEditing ? 'Editar paciente' : 'Nuevo paciente'}</h1>
+    <FormPage
+      eyebrow="Pacientes"
+      title={isEditing ? 'Editar paciente' : 'Nuevo paciente'}
+      description="Completa los datos básicos de identificación y contacto."
+    >
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 12 }}>
           <label>
@@ -184,6 +179,6 @@ export default function PacienteForm() {
       <p style={{ marginTop: 24 }}>
         <Link to="/pacientes">&larr; Volver a pacientes</Link>
       </p>
-    </div>
+    </FormPage>
   )
 }

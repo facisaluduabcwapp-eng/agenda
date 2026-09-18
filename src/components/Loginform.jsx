@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import AuthPage from './layout/AuthPage'
+import Button from './ui/Button'
+import styles from './layout/AuthPage.module.css'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -23,39 +26,42 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 320, margin: '4rem auto' }}>
-      <h2>Iniciar sesión</h2>
-      <div style={{ marginBottom: 12 }}>
-        <label>
-          Correo
+    <AuthPage
+      eyebrow="Clínica+"
+      title="Iniciar sesión"
+      description="Accede a tu agenda, pacientes y herramientas clínicas."
+    >
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.field}>
+          <label htmlFor="login-email" className={styles.label}>Correo</label>
           <input
+            id="login-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{ display: 'block', width: '100%' }}
+            className={styles.input}
+            autoComplete="email"
           />
-        </label>
-      </div>
-      <div style={{ marginBottom: 12 }}>
-        <label>
-          Contraseña
+        </div>
+        <div className={styles.field}>
+          <label htmlFor="login-password" className={styles.label}>Contraseña</label>
           <input
+            id="login-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={{ display: 'block', width: '100%' }}
+            className={styles.input}
+            autoComplete="current-password"
           />
-        </label>
-      </div>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-      <button type="submit" disabled={loading}>
-        {loading ? 'Entrando...' : 'Entrar'}
-      </button>
-      <p style={{ marginTop: 12 }}>
-        ¿No tienes cuenta? <Link to="/signup">Crear cuenta</Link>
+        </div>
+        {error && <p className={styles.error}>{error}</p>}
+        <Button type="submit" loading={loading} size="large">Entrar</Button>
+      </form>
+      <p className={styles.footer}>
+        ¿No tienes cuenta? <Link to="/signup" className={styles.link}>Crear cuenta</Link>
       </p>
-    </form>
+    </AuthPage>
   )
 }

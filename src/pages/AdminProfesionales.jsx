@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import FormPage from '../components/layout/FormPage'
+import Button from '../components/ui/Button'
 
 const EMPTY_FORM = { profile_id: '', nombre: '', especialidad: '', estado: 'activo' }
 
@@ -116,14 +118,16 @@ export default function AdminProfesionales() {
     }
   }
 
-  if (loading) return <p>Cargando profesionales...</p>
+  if (loading) return <FormPage title="Catálogo de profesionales" description="Cargando profesionales..." />
 
   return (
-    <main style={{ maxWidth: 760, margin: '2rem auto' }}>
-      <h1>Catálogo de profesionales</h1>
-      <p>Administra nombre, especialidad, estado y cuenta vinculada.</p>
+    <FormPage
+      eyebrow="Administración"
+      title="Catálogo de profesionales"
+      description="Administra nombre, especialidad, estado y cuenta vinculada."
+    >
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: 28 }}>
+      <form onSubmit={handleSubmit}>
         <h2 style={{ fontSize: '1.2rem' }}>{editingId ? 'Editar profesional' : 'Nuevo profesional'}</h2>
         <label style={{ display: 'block', marginBottom: 10 }}>
           Nombre
@@ -152,8 +156,10 @@ export default function AdminProfesionales() {
             <option value="inactivo">Inactivo</option>
           </select>
         </label>
-        <button type="submit" disabled={saving}>{saving ? 'Guardando...' : editingId ? 'Guardar cambios' : 'Crear profesional'}</button>
-        {editingId && <button type="button" onClick={resetForm} style={{ marginLeft: 8 }}>Cancelar</button>}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button type="submit" loading={saving}>{editingId ? 'Guardar cambios' : 'Crear profesional'}</Button>
+          {editingId && <Button type="button" variant="secondary" onClick={resetForm}>Cancelar</Button>}
+        </div>
       </form>
 
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
@@ -182,10 +188,10 @@ export default function AdminProfesionales() {
                   <td>{profesional.estado}</td>
                   <td>{perfil?.email || (profesional.profile_id ? 'Vinculada' : 'Sin vincular')}</td>
                   <td style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" onClick={() => editar(profesional)}>Editar</button>
-                    <button type="button" onClick={() => cambiarEstado(profesional)}>
+                    <Button type="button" size="small" variant="secondary" onClick={() => editar(profesional)}>Editar</Button>
+                    <Button type="button" size="small" variant="outline" onClick={() => cambiarEstado(profesional)}>
                       {profesional.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               )
@@ -193,6 +199,6 @@ export default function AdminProfesionales() {
           </tbody>
         </table>
       )}
-    </main>
+    </FormPage>
   )
 }

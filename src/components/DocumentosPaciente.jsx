@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import Button from '../components/ui/Button'
 
 const BUCKET = 'documentos-pacientes'
 const CAPACIDAD_BYTES = 1024 ** 3
@@ -19,6 +20,8 @@ function safeFileName(name) {
 
 export default function DocumentosPaciente({ pacienteId }) {
   const { role } = useAuth()
+  const fileInputRef = useRef(null)
+  
   const [documentos, setDocumentos] = useState([])
   const [usoBytes, setUsoBytes] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -144,50 +147,88 @@ export default function DocumentosPaciente({ pacienteId }) {
 
   const porcentaje = Math.min((usoBytes / CAPACIDAD_BYTES) * 100, 100)
 
-  if (loading) return <p>Cargando documentos...</p>
+  if (loading) return <p style={{ color: '#64748b' }}>Cargando documentos...</p>
 
   return (
-    <section style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #ddd' }}>
-      <h2 style={{ fontSize: '1.2rem' }}>Documentos</h2>
-      <p>
-        {documentos.length} documento{documentos.length === 1 ? '' : 's'} · {formatBytes(usoBytes)} de 1 GB
-      </p>
-      <progress value={porcentaje} max="100" style={{ width: '100%' }} aria-label="Uso de almacenamiento" />
-      <p style={{ color: '#666', fontSize: '0.9rem' }}>
-        Uso registrado de documentos visibles para tu usuario.
-      </p>
+    <section>
+      <div style={{ marginBottom: '1rem' }}>
+        <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600, color: '#334155' }}>
+          {documentos.length} documento{documentos.length === 1 ? '' : 's'} · {formatBytes(usoBytes)} de 1 GB
+        </p>
+        <progress value={porcentaje} max="100" style={{ width: '100%', height: '8px', borderRadius: '4px' }} aria-label="Uso de almacenamiento" />
+        <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '4px' }}>
+          Uso registrado de documentos visibles para tu usuario.
+        </p>
+      </div>
 
-      <label style={{ display: 'inline-block', marginBottom: 12 }}>
-        <span style={{ display: 'block', marginBottom: 4 }}>Subir documento</span>
-        <input type="file" onChange={handleSubir} disabled={subiendo} />
-      </label>
-      <p style={{ color: '#666', fontSize: '0.85rem' }}>Límite por archivo: {formatBytes(MAX_FILE_BYTES)}.</p>
+      <div style={{ marginBottom: '1.5rem' }}>
+        {/* Input file oculto controlado via useRef */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleSubir}
+          style={{ display: 'none' }}
+        />
+        
+        <Button
+          variant="secondary"
+          size="medium"
+          loading={subiendo}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          📁 Seleccionar y subir documento
+        </Button>
 
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-      {info && <p style={{ color: 'seagreen' }}>{info}</p>}
+        <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '6px' }}>
+          Límite por archivo: {formatBytes(MAX_FILE_BYTES)}.
+        </p>
+      </div>
+
+      {error && <p style={{ color: 'crimson', fontSize: '0.875rem' }}>{error}</p>}
+      {info && <p style={{ color: '#16a34a', fontSize: '0.875rem' }}>{info}</p>}
 
       {documentos.length === 0 ? (
-        <p style={{ color: '#777' }}>No hay documentos cargados.</p>
+        <p style={{ color: '#94a3b8', fontStyle: 'italic' }}>No hay documentos cargados.</p>
       ) : (
-        <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
+        <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
           {documentos.map((documento) => (
             <li
               key={documento.id}
-              style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee' }}
+              style={{
+                display: 'flex',
+                justify: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 0',
+                borderBottom: '1px solid #f1f5f9',
+              }}
             >
-              <span>
-                {documento.nombre_archivo} <small>({formatBytes(documento.tamaño_bytes || 0)})</small>
+              <span style={{ color: '#1e293b', fontWeight: 500 }}>
+                {documento.nombre_archivo}{' '}
+                <small style={{ color: '#64748b', fontWeight: 400 }}>({formatBytes(documento.tamaño_bytes || 0)})</small>
               </span>
-              <span style={{ display: 'flex', gap: 8 }}>
-                <button type="button" onClick={() => handleDescargar(documento)} disabled={documentoDescargando === documento.id}>
-                  {documentoDescargando === documento.id ? 'Preparando...' : 'Descargar'}
-                </button>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Button
+                  variant="outline"
+                  size="small"
+                  loading={documentoDescargando === documento.id}
+                  onClick={() => handleDescargar(documento)}
+                >
+                  Descargar
+                </Button>
+
                 {role === 'admin' && (
-                  <button type="button" onClick={() => handleEliminar(documento)}>
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    onClick={() => handleEliminar(documento)}
+                    style={{ color: '#ef4444' }}
+                  >
                     Eliminar
-                  </button>
+                  </Button>
                 )}
-              </span>
+              </div>
             </li>
           ))}
         </ul>

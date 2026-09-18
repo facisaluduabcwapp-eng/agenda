@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import FormPage from '../components/layout/FormPage'
 
 function formatFecha(iso) {
   return new Date(iso).toLocaleString('es', {
@@ -78,13 +79,12 @@ export default function NotaCita() {
     setSaving(false)
   }
 
-  if (loading) return <p>Cargando nota clínica...</p>
-  if (error && !cita) return <p style={{ color: 'crimson' }}>{error}</p>
-  if (!cita) return <p>Cita no encontrada.</p>
+  if (loading) return <FormPage title="Nota clínica" description="Cargando la cita..." />
+  if (error && !cita) return <FormPage title="Nota clínica"><p style={{ color: 'crimson' }}>{error}</p></FormPage>
+  if (!cita) return <FormPage title="Nota clínica"><p>Cita no encontrada.</p></FormPage>
 
   return (
-    <main style={{ maxWidth: 720, margin: '2rem auto' }}>
-      <h1>Nota clínica</h1>
+    <FormPage eyebrow="Atención" title="Nota clínica" description="Registra la evolución de esta consulta.">
       <p>
         <strong>Paciente:</strong> {cita.pacientes?.nombre} {cita.pacientes?.apellido}
       </p>
@@ -130,6 +130,6 @@ export default function NotaCita() {
       <p style={{ marginTop: 24 }}>
         <Link to="/citas">&larr; Volver a la agenda</Link>
       </p>
-    </main>
+    </FormPage>
   )
 }

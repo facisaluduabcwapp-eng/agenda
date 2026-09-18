@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import FormPage from '../components/layout/FormPage'
+import Button from '../components/ui/Button' // <-- Importamos el botón modular
 
 function toDatetimeLocal(isoString) {
   if (!isoString) return ''
@@ -27,9 +29,6 @@ export default function CitaForm() {
   const [notas, setNotas] = useState('')
   const [enlaceVideoconsulta, setEnlaceVideoconsulta] = useState('')
 
-  // Guarda fecha_hora y estado originales para detectar si el cambio
-  // cuenta como "reprogramación" y para bloquear edición si ya está
-  // cancelada o completada.
   const [citaOriginal, setCitaOriginal] = useState(null)
 
   const [loading, setLoading] = useState(true)
@@ -126,8 +125,6 @@ export default function CitaForm() {
         enlace_videoconsulta: enlaceVideoconsulta || null,
       }
 
-      // Solo tocamos "estado" si de verdad cambió la fecha/hora; si solo
-      // se editaron notas o profesional, el estado queda como estaba.
       if (cambioDeFecha) {
         payload.estado = 'reprogramada'
       }
@@ -166,28 +163,30 @@ export default function CitaForm() {
     navigate(`/citas/${citaCreada.id}/editar`)
   }
 
-  if (loading) return <p>Cargando...</p>
+  if (loading) return <FormPage title="Cita" description="Cargando datos de la cita..." />
 
   return (
-    <div style={{ maxWidth: 480, margin: '2rem auto' }}>
-      <h1>{isEditing ? 'Reprogramar cita' : 'Nueva cita'}</h1>
-
+    <FormPage
+      eyebrow="Agenda"
+      title={isEditing ? 'Reprogramar cita' : 'Nueva cita'}
+      description="Selecciona paciente, profesional, horario y modalidad de atención."
+    >
       {bloqueada && (
-        <p style={{ color: 'crimson' }}>
+        <p style={{ color: 'crimson', marginBottom: '1rem' }}>
           Esta cita está {citaOriginal.estado} y ya no se puede modificar.
         </p>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.875rem' }}>
             Paciente
             <select
               value={pacienteId}
               onChange={(e) => setPacienteId(e.target.value)}
               required
               disabled={bloqueada}
-              style={{ display: 'block', width: '100%' }}
+              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
             >
               <option value="">-- Selecciona un paciente --</option>
               {pacientes.map((p) => (
@@ -199,8 +198,8 @@ export default function CitaForm() {
           </label>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.875rem' }}>
             Enlace de videoconsulta
             <input
               type="url"
@@ -208,27 +207,39 @@ export default function CitaForm() {
               onChange={(e) => setEnlaceVideoconsulta(e.target.value)}
               placeholder="Se generará un enlace de Jitsi Meet"
               disabled={bloqueada}
-              style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
+              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px', boxSizing: 'border-box' }}
             />
           </label>
-          <button type="button" onClick={generarEnlaceVideoconsulta} disabled={bloqueada} style={{ marginTop: 6 }}>
-            {enlaceVideoconsulta ? 'Regenerar enlace' : 'Generar enlace de videoconsulta'}
-          </button>
+          
+          {/* Botón secundario de generación de enlace */}
+          <Button
+            type="button"
+            variant="secondary"
+            size="small"
+            onClick={generarEnlaceVideoconsulta}
+            disabled={bloqueada}
+            style={{ marginTop: '8px' }}
+          >
+            {enlaceVideoconsulta ? '🔄 Regenerar enlace' : '📹 Generar enlace de videoconsulta'}
+          </Button>
+
           {enlaceVideoconsulta && (
-            <p>
-              <a href={enlaceVideoconsulta} target="_blank" rel="noreferrer">Abrir videoconsulta</a>
+            <p style={{ marginTop: '6px', fontSize: '0.85rem' }}>
+              <a href={enlaceVideoconsulta} target="_blank" rel="noreferrer" style={{ color: '#7c3aed', fontWeight: 600 }}>
+                Abrir videoconsulta ↗
+              </a>
             </p>
           )}
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.875rem' }}>
             Profesional
             <select
               value={profesionalId}
               onChange={(e) => setProfesionalId(e.target.value)}
               disabled={bloqueada}
-              style={{ display: 'block', width: '100%' }}
+              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
             >
               <option value="">-- Sin asignar --</option>
               {profesionales.map((p) => (
@@ -241,8 +252,8 @@ export default function CitaForm() {
           </label>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.875rem' }}>
             Fecha y hora
             <input
               type="datetime-local"
@@ -250,34 +261,45 @@ export default function CitaForm() {
               onChange={(e) => setFechaHora(e.target.value)}
               required
               disabled={bloqueada}
-              style={{ display: 'block', width: '100%' }}
+              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
             />
           </label>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.875rem' }}>
             Notas
             <textarea
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               rows={3}
               disabled={bloqueada}
-              style={{ display: 'block', width: '100%' }}
+              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
             />
           </label>
         </div>
 
-        {error && <p style={{ color: 'crimson' }}>{error}</p>}
+        {error && <p style={{ color: 'crimson', marginBottom: '1rem' }}>{error}</p>}
 
-        <button type="submit" disabled={saving || bloqueada}>
-          {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear cita'}
-        </button>
+        {/* Botón Principal para el Guardado / Envío */}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="medium"
+            loading={saving}
+            disabled={bloqueada}
+          >
+            {isEditing ? 'Guardar cambios' : 'Crear cita'}
+          </Button>
+
+          <Link to="/citas" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" size="medium">
+              Cancelar
+            </Button>
+          </Link>
+        </div>
       </form>
-
-      <p style={{ marginTop: 24 }}>
-        <Link to="/citas">&larr; Volver a la agenda</Link>
-      </p>
-    </div>
+    </FormPage>
   )
 }

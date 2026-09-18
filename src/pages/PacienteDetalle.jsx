@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import DashboardLayout from '../components/dashboard/DashboardLayout'
 import AsignarProfesionales from '../components/AsignarProfesionales'
 import DocumentosPaciente from '../components/DocumentosPaciente'
+import Button from '../components/ui/Button'
+import styles from './PacienteDetalle.module.css'
 
 export default function PacienteDetalle() {
   const { id } = useParams()
@@ -25,40 +28,85 @@ export default function PacienteDetalle() {
       })
   }, [id])
 
-  if (loading) return <p>Cargando...</p>
-  if (error) return <p style={{ color: 'crimson' }}>{error}</p>
-  if (!paciente) return <p>Paciente no encontrado.</p>
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <p style={{ padding: '2rem' }}>Cargando expediente...</p>
+      </DashboardLayout>
+    )
+  }
+
+  if (error || !paciente) {
+    return (
+      <DashboardLayout>
+        <p style={{ padding: '2rem', color: 'crimson' }}>
+          {error || 'Paciente no encontrado.'}
+        </p>
+      </DashboardLayout>
+    )
+  }
 
   return (
-    <div style={{ maxWidth: 480, margin: '2rem auto' }}>
-      <h1>
-        {paciente.nombre} {paciente.apellido}
-      </h1>
-      <p>
-        <strong>Fecha de nacimiento:</strong> {paciente.fecha_nacimiento || '—'}
-      </p>
-      <p>
-        <strong>Teléfono:</strong> {paciente.telefono || '—'}
-      </p>
-      <p>
-        <strong>Correo:</strong> {paciente.email || '—'}
-      </p>
-      <p>
-        <strong>Notas generales:</strong> {paciente.notas_generales || '—'}
-      </p>
+    <DashboardLayout>
+      <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        
+        {/* Botón de regreso usando variante ghost */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <Link to="/pacientes" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" size="small">
+              ← Volver al directorio
+            </Button>
+          </Link>
+        </div>
 
-      {role === 'admin' && <AsignarProfesionales pacienteId={id} />}
+        <div style={{ background: '#fff', padding: '2rem', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+            <div>
+              <h1 style={{ margin: '0 0 0.5rem 0', color: '#0f172a' }}>
+                {paciente.nombre} {paciente.apellido}
+              </h1>
+              <p style={{ color: '#64748b', margin: 0 }}>
+                Nacimiento: {paciente.fecha_nacimiento || '—'} | Teléfono: {paciente.telefono || '—'} | Email: {paciente.email || '—'}
+              </p>
+            </div>
 
-        <DocumentosPaciente pacienteId={id} />
+            {/* Acciones del paciente */}
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <Link to={`/citas/nueva?paciente_id=${id}`} style={{ textDecoration: 'none' }}>
+                <Button variant="primary" size="small">
+                  + Agendar cita
+                </Button>
+              </Link>
+              
+              <Link to={`/pacientes/${id}/editar`} style={{ textDecoration: 'none' }}>
+                <Button variant="secondary" size="small">
+                  Editar datos
+                </Button>
+              </Link>
+            </div>
+          </div>
 
-      {/* Aquí cuelgan las pestañas de citas, notas clínicas y
-          cuando se construyan esos módulos, usando este mismo paciente.id */}
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#475569' }}>Notas generales</h4>
+            <p style={{ color: '#334155', margin: 0 }}>{paciente.notas_generales || 'Sin notas registradas.'}</p>
+          </div>
+        </div>
 
-      <p style={{ marginTop: 24 }}>
-        <Link to={`/pacientes/${id}/editar`}>Editar</Link>
-        {' · '}
-        <Link to="/pacientes">Volver a pacientes</Link>
-      </p>
-    </div>
+        {/* RESTRICCIÓN DE SEGURIDAD VISUAL:
+            Solo los administradores pueden ver y asignar profesionales.
+            El profesional solo consulta sus pacientes asignados */}
+        {role === 'admin' && (
+          <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: '1.5rem' }}>
+            <h3 style={{ margin: '0 0 1rem 0' }}>Asignación de Profesionales</h3>
+            <AsignarProfesionales pacienteId={id} />
+          </div>
+        )}
+
+        <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+          <h3 style={{ margin: '0 0 1rem 0' }}>Documentos Clínicos</h3>
+          <DocumentosPaciente pacienteId={id} />
+        </div>
+      </main>
+    </DashboardLayout>
   )
 }
