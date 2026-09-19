@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import FormPage from '../components/layout/FormPage'
+import Button from '../components/ui/Button'
+import styles from './AdminAsignaciones.module.css'
 
 export default function AdminAsignaciones() {
   const [pacientes, setPacientes] = useState([])
@@ -125,97 +127,112 @@ export default function AdminAsignaciones() {
   return (
     <FormPage
       eyebrow="Administración"
-      title="Asignar pacientes a profesionales"
-      description="Gestiona las asignaciones multidisciplinarias del expediente."
+      title="Asignaciones clínicas"
+      description="Organiza qué profesionales pueden dar seguimiento a cada paciente."
     >
-      <p style={{ color: '#555' }}>
-        Solo el admin puede crear o quitar asignaciones (policy{' '}
-        <code>paciente_profesional_admin_write</code>).
-      </p>
+      <div className={styles.intro}>
+        <div className={styles.introIcon}>+</div>
+        <div>
+          <strong>Equipo de atención</strong>
+          <span>Selecciona un paciente para administrar su equipo clínico.</span>
+        </div>
+      </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <label>
-          Paciente
-          <select
-            value={pacienteId}
-            onChange={(e) => {
-              setPacienteId(e.target.value)
-              setInfo(null)
-              setError(null)
-            }}
-            style={{ display: 'block', width: '100%', marginTop: 4 }}
-          >
-            <option value="">-- Selecciona un paciente --</option>
-            {pacientes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre} {p.apellido}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className={styles.patientPicker}>
+        <label htmlFor="patient-select">Paciente</label>
+        <select
+          id="patient-select"
+          className={styles.select}
+          value={pacienteId}
+          onChange={(e) => {
+            setPacienteId(e.target.value)
+            setInfo(null)
+            setError(null)
+          }}
+        >
+          <option value="">Selecciona un paciente</option>
+          {pacientes.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre} {p.apellido}
+            </option>
+          ))}
+        </select>
       </div>
 
       {pacienteId && (
-        <>
-          <h2 style={{ fontSize: '1.1rem' }}>Profesionales asignados</h2>
+        <div className={styles.workspace}>
+          <div className={styles.workspaceHeader}>
+            <div>
+              <p className={styles.eyebrow}>Paciente seleccionado</p>
+              <h2>{pacientes.find((p) => p.id === pacienteId)?.nombre} {pacientes.find((p) => p.id === pacienteId)?.apellido}</h2>
+            </div>
+            <span className={styles.assignmentCount}>{asignaciones.length} asignados</span>
+          </div>
 
-          {loadingAsignaciones ? (
-            <p>Cargando asignaciones...</p>
-          ) : asignaciones.length === 0 ? (
-            <p style={{ color: '#777' }}>Este paciente no tiene profesionales asignados todavía.</p>
-          ) : (
-            <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
-              {asignaciones.map((a) => (
-                <li
-                  key={a.profesional_id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 0',
-                    borderBottom: '1px solid #eee',
-                  }}
-                >
-                  <span>
-                    {a.profesionales?.nombre}
-                    {a.profesionales?.especialidad ? ` · ${a.profesionales.especialidad}` : ''}
-                  </span>
-                  <button type="button" onClick={() => handleQuitar(a.profesional_id)}>
-                    Quitar
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className={styles.assignedSection}>
+            <div className={styles.sectionTitle}>
+              <div>
+                <h3>Profesionales asignados</h3>
+                <p>Personas autorizadas para dar seguimiento a este paciente.</p>
+              </div>
+            </div>
 
-          <form onSubmit={handleAsignar} style={{ marginTop: 20, display: 'flex', gap: 8 }}>
-            <select
-              value={profesionalNuevoId}
-              onChange={(e) => setProfesionalNuevoId(e.target.value)}
-              style={{ flex: 1 }}
-              disabled={profesionalesDisponibles.length === 0}
-            >
-              <option value="">
-                {profesionalesDisponibles.length === 0
-                  ? 'Todos los profesionales activos ya están asignados'
-                  : '-- Elige un profesional para asignar --'}
-              </option>
-              {profesionalesDisponibles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                  {p.especialidad ? ` · ${p.especialidad}` : ''}
+            {loadingAsignaciones ? (
+              <div className={styles.emptyState}>Cargando equipo clínico...</div>
+            ) : asignaciones.length === 0 ? (
+              <div className={styles.emptyState}>
+                <strong>Aún no hay profesionales asignados</strong>
+                <span>Agrega el primer profesional desde el selector inferior.</span>
+              </div>
+            ) : (
+              <div className={styles.assignedList}>
+                {asignaciones.map((a) => (
+                  <div className={styles.assignedItem} key={a.profesional_id}>
+                    <div className={styles.avatar}>{a.profesionales?.nombre?.charAt(0) || 'P'}</div>
+                    <div className={styles.professionalInfo}>
+                      <strong>{a.profesionales?.nombre}</strong>
+                      <span>{a.profesionales?.especialidad || 'Profesional clínico'}</span>
+                    </div>
+                    <Button type="button" size="small" variant="outline" onClick={() => handleQuitar(a.profesional_id)}>
+                      Quitar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleAsignar} className={styles.addForm}>
+            <div>
+              <label htmlFor="professional-select">Agregar profesional</label>
+              <select
+                id="professional-select"
+                className={styles.select}
+                value={profesionalNuevoId}
+                onChange={(e) => setProfesionalNuevoId(e.target.value)}
+                disabled={profesionalesDisponibles.length === 0}
+              >
+                <option value="">
+                  {profesionalesDisponibles.length === 0
+                    ? 'Todos los profesionales activos ya están asignados'
+                    : 'Selecciona un profesional'}
                 </option>
-              ))}
-            </select>
-            <button type="submit" disabled={guardando || !profesionalNuevoId}>
-              {guardando ? 'Asignando...' : 'Asignar'}
-            </button>
+                {profesionalesDisponibles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}{p.especialidad ? ` · ${p.especialidad}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button type="submit" loading={guardando} disabled={!profesionalNuevoId}>
+              Agregar al equipo
+            </Button>
           </form>
-        </>
+        </div>
       )}
 
-      {error && <p style={{ color: 'crimson', marginTop: 12 }}>{error}</p>}
-      {info && <p style={{ color: 'seagreen', marginTop: 12 }}>{info}</p>}
+      {error && <p className={styles.error}>{error}</p>}
+      {info && <p className={styles.info}>{info}</p>}
     </FormPage>
   )
 }

@@ -25,7 +25,7 @@ export default function AdminProfesionales() {
         .order('nombre'),
       supabase
         .from('profiles')
-        .select('id, nombre_completo, email, especialidad, activo, estado_solicitud, created_at')
+        .select('id, nombre_completo, email, especialidad, activo, estado_solicitud, intentos_rechazo, created_at')
         .order('nombre_completo'),
       supabase.from('user_roles').select('user_id, rol'),
     ])
@@ -96,12 +96,18 @@ export default function AdminProfesionales() {
       .from('profiles')
       .update({
         activo: aprobada,
-        estado_solicitud: aprobada ? 'aprobada' : 'rechazada',
+        estado_solicitud: aprobada
+          ? 'aprobada'
+          : (solicitud.intentos_rechazo || 0) + 1 >= 3
+            ? 'bloqueada'
+            : 'rechazada',
+        ...(aprobada ? {} : { intentos_rechazo: Math.min((solicitud.intentos_rechazo || 0) + 1, 3) }),
       })
       .eq('id', solicitud.id)
 
     let roleError = null
     let professionalError = null
+    const rejectionCount = (solicitud.intentos_rechazo || 0) + (aprobada ? 0 : 1)
     if (!profileError && aprobada) {
       const result = await supabase
         .from('user_roles')
@@ -136,7 +142,13 @@ export default function AdminProfesionales() {
       return
     }
 
-    setInfo(aprobada ? 'Solicitud aprobada.' : 'Solicitud rechazada.')
+    setInfo(
+      aprobada
+        ? 'Solicitud aprobada.'
+        : rejectionCount >= 3
+          ? 'La cuenta fue bloqueada por seguridad después de tres rechazos.'
+          : 'Solicitud rechazada. El usuario podrá corregirla y reenviarla.'
+    )
     await cargar()
   }
 

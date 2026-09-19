@@ -52,7 +52,8 @@ export function AuthProvider({ children }) {
           (!profileResult.error &&
             !!profileResult.data?.activo &&
             profileResult.data?.estado_solicitud !== 'pendiente' &&
-            profileResult.data?.estado_solicitud !== 'rechazada')
+            profileResult.data?.estado_solicitud !== 'rechazada' &&
+            profileResult.data?.estado_solicitud !== 'bloqueada')
       )
       setRequestStatus(profileResult.error ? null : profileResult.data?.estado_solicitud ?? null)
       setRoleLoading(false)
