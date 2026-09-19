@@ -1,0 +1,103 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #f8fafc 0%, #f5f3ff 100%);
+}
+
+.card {
+  width: min(100%, 480px);
+  padding: 2.25rem;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+  text-align: center;
+}
+
+.statusIcon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.statusIcon.rejected { background: #ffe4e6; color: #e11d48; }
+
+.eyebrow {
+  margin: 0 0 0.4rem;
+  color: #7c3aed;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.card h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.5rem, 4vw, 1.9rem);
+}
+
+.description {
+  margin: 0.75rem 0 1.5rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.statusBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #ede9fe;
+  border-radius: 12px;
+  background: #faf5ff;
+  text-align: left;
+}
+
+.statusBox strong,
+.statusBox span { display: block; }
+.statusBox strong { color: #334155; font-size: 0.875rem; }
+.statusBox span:not(.statusDot):not(.statusDotRejected) { margin-top: 0.25rem; color: #64748b; font-size: 0.8rem; }
+
+.statusDot,
+.statusDotRejected {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  margin-top: 0.3rem;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px #fef3c7;
+}
+
+.statusDotRejected { background: #e11d48; box-shadow: 0 0 0 4px #ffe4e6; }
+
+.card button { width: 100%; }
+
+.link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #7c3aed;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.link:hover { text-decoration: underline; }
+
+@media (max-width: 520px) {
+  .card { padding: 1.5rem; }
+}

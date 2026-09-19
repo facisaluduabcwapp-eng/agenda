@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 
 export default function SignupForm() {
+  const navigate = useNavigate()
   const [nombreCompleto, setNombreCompleto] = useState('')
+  const [especialidad, setEspecialidad] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -16,35 +18,49 @@ export default function SignupForm() {
     setInfo(null)
     setLoading(true)
 
-    // Nota: aquí NO se manda rol. El trigger handle_new_user() en la
-    // base de datos siempre crea al usuario nuevo con rol 'profesional'.
-    // El rol real se asigna después desde el panel de admin.
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: nombreCompleto },
+        data: { full_name: nombreCompleto, specialty: especialidad },
       },
     })
 
     setLoading(false)
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError.message)
       return
+    }
+
+    const userId = data?.user?.id
+
+    if (userId) {
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: userId,
+        nombre_completo: nombreCompleto,
+        email,
+        especialidad,
+        activo: false,
+        estado_solicitud: 'pendiente',
+      })
+
+      if (profileError) {
+        setError(profileError.message)
+        return
+      }
     }
 
     if (data.session) {
-      // Confirmación de correo desactivada en el proyecto: ya quedó
-      // con sesión iniciada, App.jsx se encarga de redirigir.
+      navigate('/pendiente', { replace: true })
       return
     }
 
-    setInfo('Cuenta creada. Revisa tu correo para confirmar antes de iniciar sesión.')
+    setInfo('Cuenta creada. Confirma tu correo y espera la aprobación del administrador.')
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 320, margin: '4rem auto' }}>
+    <form onSubmit={handleSubmit} style={{ maxWidth: 360, margin: '4rem auto' }}>
       <h2>Crear cuenta</h2>
       <div style={{ marginBottom: 12 }}>
         <label>
@@ -54,6 +70,19 @@ export default function SignupForm() {
             value={nombreCompleto}
             onChange={(e) => setNombreCompleto(e.target.value)}
             required
+            style={{ display: 'block', width: '100%' }}
+          />
+        </label>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <label>
+          Especialidad
+          <input
+            type="text"
+            value={especialidad}
+            onChange={(e) => setEspecialidad(e.target.value)}
+            required
+            placeholder="Ej. Psicología"
             style={{ display: 'block', width: '100%' }}
           />
         </label>

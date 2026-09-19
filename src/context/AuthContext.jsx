@@ -6,6 +6,8 @@ const AuthContext = createContext(undefined)
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined) // undefined = cargando sesión
   const [role, setRole] = useState(null)
+  const [isActive, setIsActive] = useState(undefined)
+  const [requestStatus, setRequestStatus] = useState(null)
   const [roleLoading, setRoleLoading] = useState(false)
 
   useEffect(() => {
@@ -21,22 +23,40 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!session) {
       setRole(null)
+      setIsActive(null)
+      setRequestStatus(null)
       return
     }
 
     let cancelled = false
     setRoleLoading(true)
 
-    supabase
-      .from('user_roles')
-      .select('rol')
-      .eq('user_id', session.user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (cancelled) return
-        setRole(error ? null : data.rol)
-        setRoleLoading(false)
-      })
+    Promise.all([
+      supabase
+        .from('user_roles')
+        .select('rol')
+        .eq('user_id', session.user.id)
+        .single(),
+      supabase
+        .from('profiles')
+        .select('activo, estado_solicitud')
+        .eq('id', session.user.id)
+        .single(),
+    ]).then(([roleResult, profileResult]) => {
+      if (cancelled) return
+
+      const currentRole = roleResult.error ? null : roleResult.data?.rol ?? null
+      setRole(currentRole)
+      setIsActive(
+        currentRole === 'admin' ||
+          (!profileResult.error &&
+            !!profileResult.data?.activo &&
+            profileResult.data?.estado_solicitud !== 'pendiente' &&
+            profileResult.data?.estado_solicitud !== 'rechazada')
+      )
+      setRequestStatus(profileResult.error ? null : profileResult.data?.estado_solicitud ?? null)
+      setRoleLoading(false)
+    })
 
     return () => {
       cancelled = true
@@ -46,8 +66,8 @@ export function AuthProvider({ children }) {
   const value = {
     session,
     role,
-    // "cargando" cubre tanto la sesión inicial como el rol, una vez
-    // que sabemos que hay sesión — así ProtectedRoute solo checa un flag.
+    isActive,
+    requestStatus,
     loading: session === undefined || (!!session && roleLoading),
   }
 

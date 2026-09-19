@@ -4,7 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import Dashboard from './pages/Dashboard'
-import AdminRoles from './components/AdminRoles'
+import AdminRoles from './components/Adminroles'
 import Pacientes from './pages/Pacientes'
 import PacienteForm from './pages/PacienteForm'
 import PacienteDetalle from './pages/PacienteDetalle'
@@ -13,6 +13,7 @@ import AdminProfesionales from './pages/AdminProfesionales'
 import Citas from './pages/Citas'
 import CitaForm from './pages/CitaForm'
 import NotaCita from './pages/NotaCita'
+import PendingApproval from './components/PendingApproval'
 // Evita que alguien con sesión ya iniciada vea /login o /signup
 function GuestOnly({ children }) {
   const { session, loading } = useAuth()
@@ -38,6 +39,14 @@ function AppRoutes() {
           <GuestOnly>
             <SignupForm />
           </GuestOnly>
+        }
+      />
+      <Route
+        path="/pendiente"
+        element={
+          <ProtectedRoute allowInactive>
+            <PendingApproval />
+          </ProtectedRoute>
         }
       />
       <Route
