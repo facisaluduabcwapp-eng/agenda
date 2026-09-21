@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import FormPage from '../components/layout/FormPage'
+import Button from '../components/ui/Button'
+import { Pencil, UserPlus } from 'lucide-react'
 
 const emptyForm = {
   nombre: '',
@@ -171,9 +173,10 @@ export default function PacienteForm() {
 
         {error && <p style={{ color: 'crimson' }}>{error}</p>}
 
-        <button type="submit" disabled={saving}>
+        <Button type="submit" loading={saving}>
+          {isEditing ? <Pencil size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
           {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear paciente'}
-        </button>
+        </Button>
       </form>
 
       <p style={{ marginTop: 24 }}>
