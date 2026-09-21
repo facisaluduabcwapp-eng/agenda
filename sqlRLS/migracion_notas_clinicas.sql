@@ -53,4 +53,39 @@ drop policy if exists "notas_update_autor_o_admin" on public.notas_clinicas;
 create policy "notas_update_autor_o_admin"
   on public.notas_clinicas for update
   using (autor_id = auth.uid() or public.is_admin())
-  with check (autor_id = auth.uid() or public.is_admin());
+  with check (
+    (autor_id = auth.uid() or public.is_admin())
+    and cita_id is not null
+    and exists (
+      select 1
+      from public.citas c
+      where c.id = cita_id
+        and c.paciente_id = paciente_id
+    )
+  );
+
+-- Impide cambiar la autoría o las relaciones de una nota después de crearla.
+-- Se ejecuta antes de cada UPDATE, incluso cuando lo realiza un admin.
+create or replace function public.impedir_cambio_identidad_nota()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  -- Los identificadores que anclan la nota a su autor, cita y paciente
+  -- deben conservar exactamente el valor original.
+  if new.autor_id is distinct from old.autor_id
+     or new.cita_id is distinct from old.cita_id
+     or new.paciente_id is distinct from old.paciente_id then
+    raise exception 'autor_id, cita_id y paciente_id son inmutables';
+  end if;
+
+  return new;
+end;
+$$;
+
+-- Instala la protección para todas las actualizaciones de notas clínicas.
+drop trigger if exists trg_notas_identidad_inmutable on public.notas_clinicas;
+create trigger trg_notas_identidad_inmutable
+  before update on public.notas_clinicas
+  for each row execute function public.impedir_cambio_identidad_nota();
