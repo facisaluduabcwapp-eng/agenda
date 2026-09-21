@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import StatCard from '../components/dashboard/StatCard'
 import styles from './Citas.module.css'
+import { Bell, CalendarDays, CheckCircle2, Clock3, Video, CalendarClock, FileText, XCircle } from 'lucide-react'
 
 const ESTADOS_VISIBLES_DEFAULT = ['agendada', 'reprogramada']
 
@@ -129,19 +130,19 @@ export default function Citas() {
           <StatCard
             title="Citas de hoy"
             value={citasDeHoy.length}
-            icon="📅"
+            icon={<CalendarDays size={19} aria-hidden="true" />}
             colorTheme="pink"
           />
           <StatCard
             title="Consultas completadas"
             value={citasDeHoy.filter((c) => c.estado === 'completada').length}
-            icon="✅"
+            icon={<CheckCircle2 size={19} aria-hidden="true" />}
             colorTheme="green"
           />
           <StatCard
             title="Atenciones pendientes"
             value={citasPendientes.length}
-            icon="⏱️"
+            icon={<Clock3 size={19} aria-hidden="true" />}
             colorTheme="yellow"
           />
         </section>
@@ -226,7 +227,7 @@ export default function Citas() {
                             className={styles.actionBtn}
                             title="Ir a videoconsulta"
                           >
-                            📹
+                            <Video size={16} />
                           </a>
                         )}
 
@@ -237,14 +238,14 @@ export default function Citas() {
                               className={styles.actionBtn}
                               title="Reprogramar"
                             >
-                              ✏️
+                              <CalendarClock size={16} />
                             </Link>
                             <Link
                               to={`/citas/${c.id}/nota`}
                               className={styles.actionBtn}
                               title="Registrar nota"
                             >
-                              📝
+                              <FileText size={16} />
                             </Link>
                             <button
                               type="button"
@@ -252,7 +253,7 @@ export default function Citas() {
                               className={`${styles.actionBtn} ${styles.btnDanger}`}
                               title="Cancelar"
                             >
-                              ✕
+                              <XCircle size={16} />
                             </button>
                           </>
                         )}
@@ -284,7 +285,7 @@ export default function Citas() {
             ) : (
               proximasCitas.map((cita) => (
                 <div className={styles.reminderItem} key={cita.id}>
-                  <div className={styles.reminderIcon}>🔔</div>
+                  <div className={styles.reminderIcon}><Bell size={17} aria-hidden="true" /></div>
                   <div>
                     <strong className={styles.reminderTitle}>
                       {new Date(cita.fecha_hora).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' })}

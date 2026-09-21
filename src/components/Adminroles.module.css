@@ -1,0 +1,27 @@
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; }
+.toolbar button { display: inline-flex; align-items: center; gap: 0.45rem; }
+.intro { display: flex; align-items: center; gap: 0.8rem; }
+.introIcon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: #f3e8ff; color: #7c3aed; }
+.intro strong, .intro span { display: block; }
+.intro strong { color: #334155; font-size: 0.88rem; }
+.intro span { margin-top: 0.2rem; color: #64748b; font-size: 0.8rem; }
+.tableWrapper { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 12px; }
+.table { width: 100%; border-collapse: collapse; text-align: left; }
+.table th { padding: 0.8rem; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.table th:last-child { width: 220px; }
+.table td { padding: 0.85rem 0.8rem; border-bottom: 1px solid #f1f5f9; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.name { color: #1e293b; font-weight: 600; }
+.email { color: #64748b; font-size: 0.875rem; }
+.muted, .empty { color: #94a3b8; }
+.roleCell { display: flex; align-items: center; gap: 0.6rem; }
+.select { width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #334155; font: inherit; font-size: 0.875rem; }
+.select:focus { outline: 2px solid rgba(124, 58, 237, 0.18); border-color: #a78bfa; }
+.select:disabled { cursor: wait; background: #f8fafc; }
+.saving { color: #7c3aed; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.loading { display: flex; align-items: center; gap: 0.55rem; color: #64748b; font-size: 0.9rem; }
+.loading svg { animation: spin 1s linear infinite; }
+.error { margin: 0 0 1rem; padding: 0.75rem 1rem; border-radius: 10px; background: #fff1f2; color: #be123c; font-size: 0.85rem; }
+.empty { margin: 0; font-style: italic; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 640px) { .toolbar { align-items: flex-start; flex-direction: column; } .toolbar button { align-self: stretch; justify-content: center; } .table th:last-child { width: 180px; } }

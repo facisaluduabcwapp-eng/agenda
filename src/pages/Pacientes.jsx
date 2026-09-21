@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import StatCard from '../components/dashboard/StatCard'
 import styles from './Pacientes.module.css'
+import { Clock3, UserRound, Users, SlidersHorizontal, Download } from 'lucide-react'
 
 export default function Pacientes() {
   const { role } = useAuth()
@@ -13,6 +14,10 @@ export default function Pacientes() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [mostrarFiltros, setMostrarFiltros] = useState(false)
+  const [soloConEmail, setSoloConEmail] = useState(false)
+  const [soloConTelefono, setSoloConTelefono] = useState(false)
+  const [orden, setOrden] = useState('apellido')
 
   const fechaActual = new Intl.DateTimeFormat('es', {
     weekday: 'long',
@@ -20,14 +25,6 @@ export default function Pacientes() {
     month: 'long',
     year: 'numeric',
   }).format(new Date())
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      loadPacientes(search)
-    }, 300)
-
-    return () => clearTimeout(timeout)
-  }, [search])
 
   const loadPacientes = async (term) => {
     setLoading(true)
@@ -49,6 +46,14 @@ export default function Pacientes() {
     setLoading(false)
   }
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      loadPacientes(search)
+    }, 300)
+
+    return () => clearTimeout(timeout)
+  }, [search])
+
   // Utilidad para calcular edad desde la fecha de nacimiento
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return '—'
@@ -60,6 +65,37 @@ export default function Pacientes() {
       edad--
     }
     return `${edad} años`
+  }
+
+  const pacientesFiltrados = useMemo(() => {
+    return [...pacientes]
+      .filter((paciente) => !soloConEmail || Boolean(paciente.email?.trim()))
+      .filter((paciente) => !soloConTelefono || Boolean(paciente.telefono?.trim()))
+      .sort((a, b) => {
+        const valorA = orden === 'nombre' ? `${a.nombre} ${a.apellido}` : `${a.apellido} ${a.nombre}`
+        const valorB = orden === 'nombre' ? `${b.nombre} ${b.apellido}` : `${b.apellido} ${b.nombre}`
+        return valorA.localeCompare(valorB, 'es', { sensitivity: 'base' })
+      })
+  }, [pacientes, soloConEmail, soloConTelefono, orden])
+
+  const exportarPacientes = () => {
+    const encabezados = ['Nombre', 'Apellido', 'Edad', 'Telefono', 'Correo', 'Notas']
+    const escapar = (valor) => `"${String(valor ?? '').replaceAll('"', '""')}"`
+    const filas = pacientesFiltrados.map((paciente) => [
+      paciente.nombre,
+      paciente.apellido,
+      calcularEdad(paciente.fecha_nacimiento),
+      paciente.telefono,
+      paciente.email,
+      paciente.notas_generales,
+    ].map(escapar).join(','))
+    const csv = `\uFEFF${[encabezados, ...filas.map((fila) => fila)].map((fila) => Array.isArray(fila) ? fila.map(escapar).join(',') : fila).join('\r\n')}`
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+    const enlace = document.createElement('a')
+    enlace.href = url
+    enlace.download = `pacientes-${new Date().toISOString().slice(0, 10)}.csv`
+    enlace.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -89,21 +125,21 @@ export default function Pacientes() {
             title="Total pacientes"
             value={pacientes.length}
             badge="+12.5% este mes"
-            icon="👥"
+            icon={<Users size={19} aria-hidden="true" />}
             colorTheme="purple"
           />
           <StatCard
             title="Nuevos este mes"
             value="18"
             badge="4 esta semana"
-            icon="👤"
+            icon={<UserRound size={19} aria-hidden="true" />}
             colorTheme="pink"
           />
           <StatCard
             title="En seguimiento"
             value="32"
             badge="12 requieren atención"
-            icon="⏱️"
+            icon={<Clock3 size={19} aria-hidden="true" />}
             colorTheme="yellow"
           />
         </section>
@@ -128,18 +164,42 @@ export default function Pacientes() {
                 onChange={(e) => setSearch(e.target.value)}
                 className={styles.searchInput}
               />
-              <button className={styles.btnSecondary}>🎛️ Filtros</button>
-              <button className={styles.btnSecondary}>📥 Exportar</button>
+              <button type="button" className={styles.btnSecondary} onClick={() => setMostrarFiltros((visible) => !visible)} aria-expanded={mostrarFiltros}>
+                <SlidersHorizontal size={16} aria-hidden="true" /> Filtros
+              </button>
+              <button type="button" className={styles.btnSecondary} onClick={exportarPacientes} disabled={pacientesFiltrados.length === 0}>
+                <Download size={16} aria-hidden="true" /> Exportar
+              </button>
             </div>
           </div>
+
+          {mostrarFiltros && (
+            <div className={styles.filterPanel} aria-label="Filtros de pacientes">
+              <label className={styles.checkboxLabel}>
+                <input type="checkbox" checked={soloConEmail} onChange={(event) => setSoloConEmail(event.target.checked)} />
+                Con correo electrónico
+              </label>
+              <label className={styles.checkboxLabel}>
+                <input type="checkbox" checked={soloConTelefono} onChange={(event) => setSoloConTelefono(event.target.checked)} />
+                Con teléfono
+              </label>
+              <label className={styles.sortLabel}>
+                Ordenar por
+                <select value={orden} onChange={(event) => setOrden(event.target.value)}>
+                  <option value="apellido">Apellido</option>
+                  <option value="nombre">Nombre</option>
+                </select>
+              </label>
+            </div>
+          )}
 
           {error && <p style={{ color: 'crimson', padding: '1rem' }}>{error}</p>}
 
           {loading ? (
             <p style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Cargando directorio...</p>
-          ) : pacientes.length === 0 ? (
+          ) : pacientesFiltrados.length === 0 ? (
             <div className={styles.emptyState}>
-              <p>No se encontraron pacientes registrados.</p>
+              <p>{pacientes.length === 0 ? 'No se encontraron pacientes registrados.' : 'Ningún paciente coincide con los filtros.'}</p>
             </div>
           ) : (
             <table className={styles.table}>
@@ -154,7 +214,7 @@ export default function Pacientes() {
                 </tr>
               </thead>
               <tbody>
-                {pacientes.map((p) => {
+                {pacientesFiltrados.map((p) => {
                   const iniciales = `${p.nombre?.[0] || ''}${p.apellido?.[0] || ''}`.toUpperCase()
                   return (
                     <tr

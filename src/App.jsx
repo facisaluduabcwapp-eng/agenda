@@ -14,10 +14,11 @@ import Citas from './pages/Citas'
 import CitaForm from './pages/CitaForm'
 import NotaCita from './pages/NotaCita'
 import PendingApproval from './components/PendingApproval'
+import LoadingState from './components/ui/LoadingState'
 // Evita que alguien con sesión ya iniciada vea /login o /signup
 function GuestOnly({ children }) {
   const { session, loading } = useAuth()
-  if (loading) return <p>Cargando...</p>
+  if (loading) return <LoadingState />
   if (session) return <Navigate to="/" replace />
   return children
 }

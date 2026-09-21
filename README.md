@@ -2,6 +2,16 @@
 
 Este documento resume el comportamiento actual de AgendaPro. La seguridad real la aplican las políticas **RLS de Supabase**; ocultar botones en React solo mejora la experiencia y no sustituye las políticas.
 
+## Seguridad y coherencia de datos
+
+- Mantener activado RLS en todas las tablas y probar cada policy con una sesión de admin, profesional y médico. Una ruta o botón oculto en React no es un control de acceso.
+- No colocar claves secretas de Supabase en el frontend. La aplicación solo debe usar la clave pública `anon`; las claves `service_role` deben permanecer en funciones backend o en secretos del entorno.
+- Validar permisos también en `insert`, `update` y `delete`, especialmente para pacientes, citas, notas clínicas, documentos y cambios de rol. El frontend nunca debe ser la única validación.
+- Mantener las relaciones con claves foráneas y validar que `paciente_id`, `profesional_id`, `cita_id` y `autor_id` pertenezcan al contexto autorizado antes de guardar datos clínicos.
+- Tratar los datos clínicos y los CSV exportados como información sensible: usar HTTPS, evitar registrar datos personales en consola y compartir las descargas solo con usuarios autorizados.
+- La exportación del directorio genera un CSV local con los pacientes actualmente visibles y filtrados. No debe considerarse un mecanismo de control de permisos: la consulta de Supabase debe seguir estando protegida por RLS.
+- Antes de desplegar, configurar variables de entorno, revisar las policies después de cada migración y hacer copias de seguridad. No editar directamente una exportación de `db.sql` como sustituto de una migración versionada.
+
 ## Roles
 
 - **admin**: administra usuarios, profesionales, pacientes, asignaciones, citas, notas y documentos.

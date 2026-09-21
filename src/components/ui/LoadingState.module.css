@@ -1,0 +1,18 @@
+.loading {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.7rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.loading svg {
+  color: #7c3aed;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

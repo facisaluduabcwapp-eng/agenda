@@ -7,6 +7,7 @@ import StatCard from '../components/dashboard/StatCard'
 import AgendaHoy from '../components/dashboard/AgendaHoy'
 import Recordatorios from '../components/dashboard/Recordatorios'
 import styles from './Dashboard.module.css'
+import { CalendarDays, Check, FileText, Users } from 'lucide-react'
 
 export default function Dashboard() {
   const { session, role } = useAuth()
@@ -61,25 +62,25 @@ export default function Dashboard() {
             <StatCard
               title="Pacientes visibles"
               value={stats.pacientes}
-              icon="👥"
+              icon={<Users size={19} aria-hidden="true" />}
               colorTheme="purple"
             />
             <StatCard
               title="Citas de hoy"
               value={stats.citas}
-              icon="📅"
+              icon={<CalendarDays size={19} aria-hidden="true" />}
               colorTheme="pink"
             />
             <StatCard
               title="Consultas completadas"
               value={stats.completadas}
-              icon="✓"
+              icon={<Check size={19} aria-hidden="true" />}
               colorTheme="green"
             />
             <StatCard
               title="Documentos registrados"
               value={stats.documentos}
-              icon="📄"
+              icon={<FileText size={19} aria-hidden="true" />}
               colorTheme="yellow"
             />
           </section>

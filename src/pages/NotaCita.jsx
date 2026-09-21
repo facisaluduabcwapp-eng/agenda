@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import FormPage from '../components/layout/FormPage'
+import Button from '../components/ui/Button'
+import { Save } from 'lucide-react'
 
 function formatFecha(iso) {
   return new Date(iso).toLocaleString('es', {
@@ -105,9 +107,10 @@ export default function NotaCita() {
           placeholder="Escribe aquí la evolución, observaciones y plan de atención..."
           style={{ display: 'block', width: '100%', marginTop: 8, padding: 12, boxSizing: 'border-box', resize: 'vertical' }}
         />
-        <button type="submit" disabled={saving || !contenido.trim()} style={{ marginTop: 12 }}>
+        <Button type="submit" loading={saving} disabled={!contenido.trim()}>
+          <Save size={16} aria-hidden="true" />
           {saving ? 'Guardando...' : 'Guardar nota'}
-        </button>
+        </Button>
       </form>
 
       {error && <p style={{ color: 'crimson' }}>{error}</p>}

@@ -1,6 +1,7 @@
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import styles from './Header.module.css'
+import { Bell, Search } from 'lucide-react'
 
 export default function Header() {
   const { session } = useAuth()
@@ -10,7 +11,7 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.searchContainer}>
-        <span className={styles.searchIcon}>🔍</span>
+        <Search size={17} aria-hidden="true" className={styles.searchIcon} />
         <input 
           type="text" 
           placeholder="Buscar pacientes, citas..." 
@@ -19,7 +20,7 @@ export default function Header() {
       </div>
 
       <div className={styles.userSection}>
-        <button className={styles.bellBtn} title="Notificaciones">🔔</button>
+        <button className={styles.bellBtn} title="Notificaciones"><Bell size={18} aria-hidden="true" /></button>
         <div className={styles.userProfile}>
           <div className={styles.avatar}>{initials}</div>
           <span className={styles.userName}>{email.split('@')[0]}</span>

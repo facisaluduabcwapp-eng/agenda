@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import Button from '../components/ui/Button'
+import FormPage from './layout/FormPage'
+import { LoaderCircle, RefreshCw, ShieldCheck } from 'lucide-react'
+import styles from './Adminroles.module.css'
 
 const ROLES = ['admin', 'profesional', 'medico']
 
@@ -61,47 +65,70 @@ export default function AdminRoles() {
     )
   }
 
-  if (loading) return <p>Cargando solicitudes...</p>
+  if (loading) {
+    return (
+      <FormPage eyebrow="Administración" title="Asignación de roles" description="Administra los permisos de acceso y el nivel de privilegio de los usuarios.">
+        <div className={styles.loading}>
+          <LoaderCircle size={18} aria-hidden="true" />
+          Cargando usuarios y roles...
+        </div>
+      </FormPage>
+    )
+  }
 
   return (
-    <div style={{ maxWidth: 980, margin: '2rem auto', padding: '0 1rem' }}>
-      <h2>Asignación de roles</h2>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-      {usuarios.length === 0 && !error && <p>No hay usuarios registrados.</p>}
+    <FormPage eyebrow="Administración" title="Asignación de roles" description="Administra los permisos de acceso y el nivel de privilegio de los usuarios.">
+      <div className={styles.toolbar}>
+        <div className={styles.intro}>
+          <div className={styles.introIcon}><ShieldCheck size={19} aria-hidden="true" /></div>
+          <div>
+            <strong>Control de acceso</strong>
+            <span>Los cambios se aplican inmediatamente a la cuenta seleccionada.</span>
+          </div>
+        </div>
+        <Button variant="ghost" size="small" onClick={loadUsuarios}>
+          <RefreshCw size={15} aria-hidden="true" />
+          Actualizar
+        </Button>
+      </div>
+
+      {error && <p className={styles.error}>{error}</p>}
+      {usuarios.length === 0 && !error && <p className={styles.empty}>No hay usuarios registrados.</p>}
 
       {usuarios.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>
-              <th>Nombre</th>
-              <th>Correo</th>
-              <th>Rol</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.map((u) => (
-              <tr key={u.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td>{u.nombre_completo || '(sin nombre)'}</td>
-                <td>{u.email}</td>
-                <td>
-                  <select
-                    value={u.rol}
-                    onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                    disabled={savingId === u.id}
-                    style={{ width: '100%' }}
-                  >
-                    {ROLES.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol asignado</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {usuarios.map((u) => (
+                <tr key={u.id}>
+                  <td className={styles.name}>{u.nombre_completo || <span className={styles.muted}>(sin nombre)</span>}</td>
+                  <td className={styles.email}>{u.email}</td>
+                  <td>
+                    <div className={styles.roleCell}>
+                      <select
+                        value={u.rol}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                        disabled={savingId === u.id}
+                        className={styles.select}
+                      >
+                        {ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+                      </select>
+                      {savingId === u.id && <span className={styles.saving}>Guardando...</span>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
-    </div>
+    </FormPage>
   )
 }

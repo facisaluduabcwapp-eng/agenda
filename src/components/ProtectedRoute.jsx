@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import LoadingState from './ui/LoadingState'
 
 /**
  * Envuelve una ruta que requiere sesión iniciada.
@@ -9,7 +10,7 @@ import { useAuth } from '../context/AuthContext'
 export default function ProtectedRoute({ rolesPermitidos, allowInactive = false, children }) {
   const { session, role, isActive, loading } = useAuth()
 
-  if (loading) return <p>Cargando...</p>
+  if (loading) return <LoadingState />
   if (!session) return <Navigate to="/login" replace />
 
   if (isActive === false && !allowInactive) {

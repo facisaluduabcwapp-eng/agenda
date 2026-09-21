@@ -105,3 +105,49 @@
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
 }
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    padding: 0.85rem 1rem;
+    position: relative;
+    border-right: 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .brand {
+    margin-bottom: 0.75rem;
+  }
+
+  .sectionLabel {
+    display: none;
+  }
+
+  .navList {
+    flex-direction: row;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    scrollbar-width: thin;
+  }
+
+  .navList + .sectionLabel {
+    display: none;
+  }
+
+  .navItem {
+    padding: 0.6rem 0.7rem;
+    white-space: nowrap;
+    font-size: 0.82rem;
+  }
+
+  .navContent {
+    gap: 0.45rem;
+  }
+
+  .navList:not(:first-of-type) {
+    margin-top: 0.35rem;
+  }
+}
