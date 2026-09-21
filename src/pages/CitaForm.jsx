@@ -22,6 +22,7 @@ export default function CitaForm() {
 
   const [pacientes, setPacientes] = useState([])
   const [profesionales, setProfesionales] = useState([])
+  const [profesionalesAsignados, setProfesionalesAsignados] = useState([])
 
   const [pacienteId, setPacienteId] = useState(pacientePreseleccionado)
   const [profesionalId, setProfesionalId] = useState('')
@@ -34,6 +35,30 @@ export default function CitaForm() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    async function cargarProfesionalesAsignados() {
+      if (!pacienteId) {
+        setProfesionalesAsignados([])
+        return
+      }
+
+      const { data, error: asignacionesError } = await supabase
+        .from('paciente_profesional')
+        .select('profesional_id')
+        .eq('paciente_id', pacienteId)
+
+      if (asignacionesError) {
+        setError(asignacionesError.message)
+        setProfesionalesAsignados([])
+        return
+      }
+
+      setProfesionalesAsignados(data.map((asignacion) => asignacion.profesional_id))
+    }
+
+    cargarProfesionalesAsignados()
+  }, [pacienteId])
 
   useEffect(() => {
     async function cargar() {
@@ -99,6 +124,9 @@ export default function CitaForm() {
   }, [id, isEditing, role, session])
 
   const bloqueada = citaOriginal && ['cancelada', 'completada'].includes(citaOriginal.estado)
+  const profesionalesDisponibles = profesionales.filter((profesional) =>
+    profesionalesAsignados.includes(profesional.id)
+  )
 
   const generarEnlaceVideoconsulta = () => {
     const sala = `AgendaPro-${crypto.randomUUID()}`
@@ -183,7 +211,10 @@ export default function CitaForm() {
             Paciente
             <select
               value={pacienteId}
-              onChange={(e) => setPacienteId(e.target.value)}
+              onChange={(e) => {
+                setPacienteId(e.target.value)
+                setProfesionalId('')
+              }}
               required
               disabled={bloqueada}
               style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
@@ -242,7 +273,7 @@ export default function CitaForm() {
               style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
             >
               <option value="">-- Sin asignar --</option>
-              {profesionales.map((p) => (
+              {profesionalesDisponibles.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre}
                   {p.especialidad ? ` · ${p.especialidad}` : ''}

@@ -57,7 +57,7 @@ Las citas se guardan en `public.citas` y pueden incluir:
 - Notas generales.
 - Enlace externo de videoconsulta en `enlace_videoconsulta`.
 
-Las reglas actuales impiden que un profesional o médico asigne una cita a otro colega desde el frontend o directamente mediante la API. La policy valida el `profile_id` del profesional vinculado.
+Las reglas actuales solo permiten crear o actualizar una cita con un profesional que esté asignado al paciente en `paciente_profesional`. Esta comprobación se aplica también directamente contra la API, incluido para administradores. Las citas sin profesional siguen permitidas cuando `profesional_id` es `null`.
 
 La videoconsulta usa actualmente una sala externa de Jitsi Meet. El enlace se guarda en la cita y solo se muestra a usuarios que pueden consultar esa cita.
 

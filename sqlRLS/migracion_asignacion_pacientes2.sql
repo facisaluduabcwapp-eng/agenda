@@ -31,6 +31,22 @@ as $$
   );
 $$;
 
+-- ¿Este profesional está asignado al paciente indicado?
+create or replace function public.profesional_asignado_a_paciente(
+  p_paciente_id uuid,
+  p_profesional_id uuid
+)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.paciente_profesional pp
+    where pp.paciente_id = p_paciente_id
+      and pp.profesional_id = p_profesional_id
+  );
+$$;
+
 -- 2) PACIENTES — mismo criterio, ahora centralizado en la función
 drop policy "pacientes_select_staff" on public.pacientes;
 create policy "pacientes_select_staff"
@@ -55,7 +71,13 @@ create policy "citas_select_staff"
 drop policy "citas_insert_staff" on public.citas;
 create policy "citas_insert_staff"
   on public.citas for insert
-  with check (public.tiene_acceso_a_paciente(paciente_id));
+  with check (
+    public.tiene_acceso_a_paciente(paciente_id)
+    and (
+      profesional_id is null
+      or public.profesional_asignado_a_paciente(paciente_id, profesional_id)
+    )
+  );
 
 drop policy "citas_update_staff" on public.citas;
 create policy "citas_update_staff"
@@ -64,6 +86,13 @@ create policy "citas_update_staff"
     public.tiene_acceso_a_paciente(paciente_id)
     or public.es_mi_profesional(profesional_id)
     or creado_por = auth.uid()
+  )
+  with check (
+    public.tiene_acceso_a_paciente(paciente_id)
+    and (
+      profesional_id is null
+      or public.profesional_asignado_a_paciente(paciente_id, profesional_id)
+    )
   );
 
 -- 4) NOTAS CLÍNICAS
