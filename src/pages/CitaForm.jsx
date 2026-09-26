@@ -2,14 +2,26 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { buildGoogleCalendarUrl } from '../lib/googleCalendar'
+import { enviarNotificacionCita } from '../lib/emailNotifications'
 import FormPage from '../components/layout/FormPage'
-import Button from '../components/ui/Button' // <-- Importamos el botón modular
+import Button from '../components/ui/Button'
 
 function toDatetimeLocal(isoString) {
   if (!isoString) return ''
   const d = new Date(isoString)
   const pad = (n) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function formatFechaLegible(isoString) {
+  return new Date(isoString).toLocaleString('es', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 export default function CitaForm() {
@@ -69,11 +81,13 @@ export default function CitaForm() {
         { data: pacientesData, error: pacientesError },
         { data: profesionalesData, error: profesionalesError },
       ] = await Promise.all([
-        supabase.from('pacientes').select('id, nombre, apellido').order('nombre'),
+        // email se trae aquí para poder notificar al paciente al
+        // crear/reprogramar/cancelar su cita.
+        supabase.from('pacientes').select('id, nombre, apellido, email').order('nombre'),
         (() => {
           let query = supabase
             .from('profesionales')
-            .select('id, nombre, especialidad')
+            .select('id, nombre, especialidad, profile_id, profiles(email)')
             .eq('estado', 'activo')
 
           if (role !== 'admin') query = query.eq('profile_id', session.user.id)
@@ -133,6 +147,61 @@ export default function CitaForm() {
     setEnlaceVideoconsulta(`https://meet.jit.si/${sala}`)
   }
 
+  const pacienteSeleccionado = pacientes.find((p) => p.id === pacienteId)
+  const profesionalSeleccionado = profesionales.find((p) => p.id === profesionalId)
+  const nombrePacienteSeleccionado = pacienteSeleccionado
+    ? `${pacienteSeleccionado.nombre} ${pacienteSeleccionado.apellido}`
+    : ''
+  const tituloEventoCalendar = profesionalSeleccionado
+    ? `Cita: ${nombrePacienteSeleccionado} con ${profesionalSeleccionado.nombre}`
+    : `Cita: ${nombrePacienteSeleccionado}`
+
+  const fechaHoraSeleccionadaISO = fechaHora ? new Date(fechaHora).toISOString() : null
+  const googleCalendarUrl = pacienteId
+    ? buildGoogleCalendarUrl({
+        titulo: tituloEventoCalendar,
+        descripcion: [notas, enlaceVideoconsulta].filter(Boolean).join('\n'),
+        fechaHoraISO: fechaHoraSeleccionadaISO,
+      })
+    : null
+
+  // Notifica a las dos partes posibles, cada una con su propia regla:
+  // - Profesional: solo si alguien MÁS lo asignó (si te agendas tú
+  //   mismo, no hace falta que te avises a ti mismo).
+  // - Paciente: siempre que tenga correo registrado, sin importar
+  //   quién creó la cita (el paciente nunca es quien la crea).
+  const notificarPersonasSiAplica = async (tipoEvento) => {
+    const envios = []
+
+    if (profesionalSeleccionado && profesionalSeleccionado.profile_id !== session.user.id) {
+      envios.push(
+        enviarNotificacionCita({
+          destinatarioEmail: profesionalSeleccionado.profiles?.email,
+          destinatarioNombre: profesionalSeleccionado.nombre,
+          pacienteNombre: nombrePacienteSeleccionado,
+          fechaHoraTexto: formatFechaLegible(fechaHoraSeleccionadaISO),
+          notas,
+          tipoEvento,
+        })
+      )
+    }
+
+    if (pacienteSeleccionado?.email) {
+      envios.push(
+        enviarNotificacionCita({
+          destinatarioEmail: pacienteSeleccionado.email,
+          destinatarioNombre: nombrePacienteSeleccionado,
+          pacienteNombre: nombrePacienteSeleccionado,
+          fechaHoraTexto: formatFechaLegible(fechaHoraSeleccionadaISO),
+          notas,
+          tipoEvento,
+        })
+      )
+    }
+
+    await Promise.all(envios)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (bloqueada) return
@@ -166,6 +235,10 @@ export default function CitaForm() {
         return
       }
 
+      if (cambioDeFecha) {
+        notificarPersonasSiAplica('reprogramada')
+      }
+
       navigate('/citas')
       return
     }
@@ -187,6 +260,8 @@ export default function CitaForm() {
       setError(error.message)
       return
     }
+
+    notificarPersonasSiAplica('nueva')
 
     navigate(`/citas/${citaCreada.id}/editar`)
   }
@@ -227,6 +302,13 @@ export default function CitaForm() {
               ))}
             </select>
           </label>
+          {pacienteSeleccionado && (
+            <p style={{ marginTop: '6px', fontSize: '0.8rem', color: '#64748b' }}>
+              {pacienteSeleccionado.email
+                ? `Se notificará por correo a ${pacienteSeleccionado.email}`
+                : 'Este paciente no tiene correo registrado; no se le podrá notificar.'}
+            </p>
+          )}
         </div>
 
         <div style={{ marginBottom: 16 }}>
@@ -241,8 +323,7 @@ export default function CitaForm() {
               style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px', boxSizing: 'border-box' }}
             />
           </label>
-          
-          {/* Botón secundario de generación de enlace */}
+
           <Button
             type="button"
             variant="secondary"
@@ -281,6 +362,13 @@ export default function CitaForm() {
               ))}
             </select>
           </label>
+          {profesionalSeleccionado && profesionalSeleccionado.profile_id !== session.user.id && (
+            <p style={{ marginTop: '6px', fontSize: '0.8rem', color: '#64748b' }}>
+              {profesionalSeleccionado.profiles?.email
+                ? `Se notificará por correo a ${profesionalSeleccionado.profiles.email}`
+                : 'Este profesional no tiene correo registrado; no se le podrá notificar.'}
+            </p>
+          )}
         </div>
 
         <div style={{ marginBottom: 16 }}>
@@ -295,6 +383,17 @@ export default function CitaForm() {
               style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
             />
           </label>
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="small"
+            onClick={() => window.open(googleCalendarUrl, '_blank', 'noopener,noreferrer')}
+            disabled={bloqueada || !googleCalendarUrl}
+            style={{ marginTop: '8px' }}
+          >
+            📅 Agregar a Google Calendar
+          </Button>
         </div>
 
         <div style={{ marginBottom: 20 }}>
@@ -312,7 +411,6 @@ export default function CitaForm() {
 
         {error && <p style={{ color: 'crimson', marginBottom: '1rem' }}>{error}</p>}
 
-        {/* Botón Principal para el Guardado / Envío */}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <Button
             type="submit"

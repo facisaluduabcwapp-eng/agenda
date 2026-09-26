@@ -1,0 +1,152 @@
+.hojaImprimible {
+  color: #1e293b;
+}
+
+.encabezadoImpresion {
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid #0f766e;
+}
+
+.etiqueta {
+  margin: 0 0 0.35rem;
+  color: #0f766e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.encabezadoImpresion h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+}
+
+.encabezadoImpresion > p:not(.etiqueta) {
+  margin: 0.25rem 0 1rem;
+  color: #475569;
+}
+
+.encabezadoImpresion h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.15rem;
+}
+
+.seccionImpresion {
+  padding: 1rem 0;
+  border-bottom: 1px solid #cbd5e1;
+  break-inside: avoid;
+}
+
+.seccionImpresion > h3 {
+  margin: 0 0 0.8rem;
+  color: #0f766e;
+  font-size: 0.95rem;
+}
+
+.datosGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 1.5rem;
+  margin: 0;
+}
+
+.datosGrid dt {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.datosGrid dd {
+  margin: 0.2rem 0 0;
+  color: #0f172a;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.motivoCita {
+  margin-top: 1rem;
+}
+
+.motivoCita h4,
+.notaImpresion h4 {
+  margin: 0;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.motivoCita p,
+.notaImpresion p {
+  margin: 0.4rem 0 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.notasImpresion {
+  display: grid;
+  gap: 1rem;
+}
+
+.notaImpresion {
+  break-inside: avoid;
+}
+
+.sinNotas {
+  margin: 0;
+  color: #64748b;
+}
+
+.accionesPantalla {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.formularioPantalla {
+  margin-top: 1.5rem;
+}
+
+.enlacePantalla {
+  margin: 1.5rem 0 0;
+}
+
+@media (max-width: 520px) {
+  .datosGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 18mm;
+  }
+
+  :global(body *) {
+    visibility: hidden !important;
+  }
+
+  .hojaImprimible,
+  .hojaImprimible * {
+    visibility: visible !important;
+  }
+
+  .hojaImprimible {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color: #111827;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 11pt;
+  }
+
+  .encabezadoImpresion,
+  .seccionImpresion {
+    border-color: #9ca3af;
+  }
+
+  .etiqueta,
+  .seccionImpresion > h3 {
+    color: #111827;
+  }
+}

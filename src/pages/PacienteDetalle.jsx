@@ -8,12 +8,30 @@ import DocumentosPaciente from '../components/DocumentosPaciente'
 import Button from '../components/ui/Button'
 import styles from './PacienteDetalle.module.css'
 
+function formatFechaCita(fechaHora) {
+  return new Date(fechaHora).toLocaleString('es', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
+
+const etiquetasEstado = {
+  agendada: 'Agendada',
+  reprogramada: 'Reprogramada',
+  cancelada: 'Cancelada',
+  completada: 'Completada',
+}
+
 export default function PacienteDetalle() {
   const { id } = useParams()
   const { role } = useAuth()
   const [paciente, setPaciente] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [citas, setCitas] = useState([])
+  const [notas, setNotas] = useState([])
+  const [loadingHistorial, setLoadingHistorial] = useState(true)
+  const [errorHistorial, setErrorHistorial] = useState(null)
 
   useEffect(() => {
     supabase
@@ -27,6 +45,49 @@ export default function PacienteDetalle() {
         setLoading(false)
       })
   }, [id])
+
+  useEffect(() => {
+    let activo = true
+
+    const cargarHistorial = async () => {
+      setLoadingHistorial(true)
+      setErrorHistorial(null)
+
+      const [citasResult, notasResult] = await Promise.all([
+        supabase
+          .from('citas')
+          .select('id, fecha_hora, estado, notas, profesionales(nombre)')
+          .eq('paciente_id', id)
+          .order('fecha_hora', { ascending: false }),
+        supabase
+          .from('notas_clinicas')
+          .select('id, cita_id, contenido, created_at')
+          .eq('paciente_id', id)
+          .order('created_at', { ascending: false }),
+      ])
+
+      if (!activo) return
+
+      if (citasResult.error || notasResult.error) {
+        setErrorHistorial(citasResult.error?.message || notasResult.error?.message)
+      } else {
+        setCitas(citasResult.data || [])
+        setNotas(notasResult.data || [])
+      }
+      setLoadingHistorial(false)
+    }
+
+    cargarHistorial()
+    return () => {
+      activo = false
+    }
+  }, [id])
+
+  const notasPorCita = notas.reduce((grupos, nota) => {
+    if (!nota.cita_id) return grupos
+    grupos[nota.cita_id] = [...(grupos[nota.cita_id] || []), nota]
+    return grupos
+  }, {})
 
   if (loading) {
     return (
@@ -101,6 +162,71 @@ export default function PacienteDetalle() {
             <AsignarProfesionales pacienteId={id} />
           </div>
         )}
+
+        <section className={styles.historial} aria-labelledby="historial-citas-titulo">
+          <div className={styles.historialHeader}>
+            <div>
+              <h2 id="historial-citas-titulo">Historial de citas</h2>
+              <p>Citas y notas clínicas de este paciente.</p>
+            </div>
+            <Link to={`/citas/nueva?paciente_id=${id}`} className={styles.enlaceAccion}>
+              + Agendar cita
+            </Link>
+          </div>
+
+          {errorHistorial && <p className={styles.error}>{errorHistorial}</p>}
+          {loadingHistorial ? (
+            <p className={styles.estadoVacio}>Cargando historial...</p>
+          ) : errorHistorial ? null : citas.length === 0 ? (
+            <p className={styles.estadoVacio}>Este paciente todavía no tiene citas registradas.</p>
+          ) : (
+            <ol className={styles.listaCitas}>
+              {citas.map((cita) => {
+                const notasCita = notasPorCita[cita.id] || []
+                return (
+                  <li key={cita.id} className={styles.cita}>
+                    <div className={styles.citaResumen}>
+                      <div>
+                        <time className={styles.fechaCita} dateTime={cita.fecha_hora}>
+                          {formatFechaCita(cita.fecha_hora)}
+                        </time>
+                        <p className={styles.profesionalCita}>
+                          {cita.profesionales?.nombre || 'Sin profesional asignado'}
+                        </p>
+                      </div>
+                      <span className={`${styles.estadoCita} ${styles[`estado_${cita.estado}`] || ''}`}>
+                        {etiquetasEstado[cita.estado] || cita.estado}
+                      </span>
+                    </div>
+
+                    {cita.notas && <p className={styles.notasCita}>{cita.notas}</p>}
+
+                    <div className={styles.notasClinicas}>
+                      <div className={styles.notasHeader}>
+                        <h3>Notas clínicas</h3>
+                        <Link to={`/citas/${cita.id}/nota`} className={styles.enlaceAccion}>
+                          {notasCita.length ? 'Ver / agregar nota' : 'Agregar nota'}
+                        </Link>
+                      </div>
+                      {notasCita.length === 0 ? (
+                        <p className={styles.sinNotas}>Sin notas clínicas para esta cita.</p>
+                      ) : (
+                        <ul className={styles.listaNotas}>
+                          {notasCita.map((nota) => (
+                            <li key={nota.id}>
+                              <time dateTime={nota.created_at}>{formatFechaCita(nota.created_at)}</time>
+                              <p>{nota.contenido}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+        </section>
 
         <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
           <h3 style={{ margin: '0 0 1rem 0' }}>Documentos Clínicos</h3>

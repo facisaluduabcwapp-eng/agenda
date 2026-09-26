@@ -2,10 +2,22 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { buildGoogleCalendarUrl } from '../lib/googleCalendar'
+import { enviarNotificacionCita } from '../lib/emailNotifications'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import StatCard from '../components/dashboard/StatCard'
 import styles from './Citas.module.css'
-import { Bell, CalendarDays, CheckCircle2, Clock3, Video, CalendarClock, FileText, XCircle } from 'lucide-react'
+import {
+  Bell,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Video,
+  CalendarClock,
+  CalendarPlus,
+  FileText,
+  XCircle,
+} from 'lucide-react'
 
 const ESTADOS_VISIBLES_DEFAULT = ['agendada', 'reprogramada']
 
@@ -24,13 +36,24 @@ function formatFechaCompleta(iso) {
   })
 }
 
+function formatFechaLegible(iso) {
+  return new Date(iso).toLocaleString('es', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function Citas() {
-  const { role } = useAuth()
+  const { role, session } = useAuth()
   const [citas, setCitas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
   const [mostrarTodas, setMostrarTodas] = useState(false)
+  const [completandoId, setCompletandoId] = useState(null)
 
   const fechaActual = new Intl.DateTimeFormat('es', {
     weekday: 'long',
@@ -45,7 +68,11 @@ export default function Citas() {
 
     const { data, error } = await supabase
       .from('citas')
-      .select('id, fecha_hora, estado, notas, enlace_videoconsulta, pacientes(nombre, apellido), profesionales(nombre)')
+      .select(
+        // pacientes(email) y profesionales(profile_id, profiles(email))
+        // se traen para poder notificar al cancelar, sin otra consulta.
+        'id, fecha_hora, estado, notas, enlace_videoconsulta, pacientes(nombre, apellido, email), profesionales(nombre, profile_id, profiles(email))'
+      )
       .order('fecha_hora', { ascending: true })
 
     if (error) setError(error.message)
@@ -58,11 +85,11 @@ export default function Citas() {
     cargar()
   }, [])
 
-  const handleCancelar = async (citaId) => {
+  const handleCancelar = async (cita) => {
     setError(null)
     setInfo(null)
 
-    const { error } = await supabase.from('citas').update({ estado: 'cancelada' }).eq('id', citaId)
+    const { error } = await supabase.from('citas').update({ estado: 'cancelada' }).eq('id', cita.id)
 
     if (error) {
       setError(error.message)
@@ -70,7 +97,65 @@ export default function Citas() {
     }
 
     setInfo('Cita cancelada correctamente.')
+
+    const nombrePaciente = `${cita.pacientes?.nombre || ''} ${cita.pacientes?.apellido || ''}`.trim()
+    const fechaHoraTexto = formatFechaLegible(cita.fecha_hora)
+    const envios = []
+
+    // Profesional: solo si quien cancela no es el propio profesional.
+    const profesional = cita.profesionales
+    if (profesional && profesional.profile_id !== session.user.id) {
+      envios.push(
+        enviarNotificacionCita({
+          destinatarioEmail: profesional.profiles?.email,
+          destinatarioNombre: profesional.nombre,
+          pacienteNombre: nombrePaciente,
+          fechaHoraTexto,
+          notas: cita.notas,
+          tipoEvento: 'cancelada',
+        })
+      )
+    }
+
+    // Paciente: siempre que tenga correo registrado.
+    if (cita.pacientes?.email) {
+      envios.push(
+        enviarNotificacionCita({
+          destinatarioEmail: cita.pacientes.email,
+          destinatarioNombre: nombrePaciente,
+          pacienteNombre: nombrePaciente,
+          fechaHoraTexto,
+          notas: cita.notas,
+          tipoEvento: 'cancelada',
+        })
+      )
+    }
+
+    await Promise.all(envios)
+
     cargar()
+  }
+
+  const handleCompletar = async (cita) => {
+    setError(null)
+    setInfo(null)
+    setCompletandoId(cita.id)
+
+    const { error: updateError } = await supabase
+      .from('citas')
+      .update({ estado: 'completada' })
+      .eq('id', cita.id)
+
+    if (updateError) {
+      setError(updateError.message)
+      setCompletandoId(null)
+      return
+    }
+
+    setInfo('Cita marcada como completada.')
+    setMostrarTodas(true)
+    await cargar()
+    setCompletandoId(null)
   }
 
   const citasVisibles = mostrarTodas
@@ -187,6 +272,19 @@ export default function Citas() {
                 {citasVisibles.map((c) => {
                   const iniciales = `${c.pacientes?.nombre?.[0] || ''}${c.pacientes?.apellido?.[0] || ''}`.toUpperCase()
 
+                  const nombrePaciente = `${c.pacientes?.nombre || ''} ${c.pacientes?.apellido || ''}`.trim()
+                  const tituloEvento = c.profesionales?.nombre
+                    ? `Cita: ${nombrePaciente} con ${c.profesionales.nombre}`
+                    : `Cita: ${nombrePaciente}`
+                  const descripcionEvento = [c.notas, c.enlace_videoconsulta]
+                    .filter(Boolean)
+                    .join('\n')
+                  const googleCalendarUrl = buildGoogleCalendarUrl({
+                    titulo: tituloEvento,
+                    descripcion: descripcionEvento,
+                    fechaHoraISO: c.fecha_hora,
+                  })
+
                   return (
                     <div key={c.id} className={styles.citaRow}>
                       <div className={styles.time}>
@@ -231,6 +329,18 @@ export default function Citas() {
                           </a>
                         )}
 
+                        {!['cancelada', 'completada'].includes(c.estado) && googleCalendarUrl && (
+                          <a
+                            href={googleCalendarUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.actionBtn}
+                            title="Agregar a Google Calendar"
+                          >
+                            <CalendarPlus size={16} />
+                          </a>
+                        )}
+
                         {!['cancelada', 'completada'].includes(c.estado) && (
                           <>
                             <Link
@@ -249,7 +359,17 @@ export default function Citas() {
                             </Link>
                             <button
                               type="button"
-                              onClick={() => handleCancelar(c.id)}
+                              onClick={() => handleCompletar(c)}
+                              disabled={completandoId === c.id}
+                              className={`${styles.actionBtn} ${styles.btnSuccess}`}
+                              title="Marcar como completada"
+                              aria-label={`Marcar cita de ${nombrePaciente} como completada`}
+                            >
+                              <CheckCircle2 size={16} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCancelar(c)}
                               className={`${styles.actionBtn} ${styles.btnDanger}`}
                               title="Cancelar"
                             >

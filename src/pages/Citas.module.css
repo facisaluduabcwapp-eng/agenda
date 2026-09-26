@@ -248,6 +248,15 @@
   color: #dc2626;
 }
 
+.btnSuccess {
+  color: #15803d;
+}
+
+.btnSuccess:hover {
+  background-color: #f0fdf4;
+  color: #166534;
+}
+
 .sideCard {
   background: #ffffff;
   border-radius: 16px;

@@ -1,0 +1,155 @@
+.historial {
+	padding: 1.5rem;
+	margin-bottom: 1.5rem;
+	background: #fff;
+	border: 1px solid #f1f5f9;
+	border-radius: 16px;
+}
+
+.historialHeader,
+.notasHeader,
+.citaResumen {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.historialHeader {
+	margin-bottom: 1rem;
+}
+
+.historialHeader h2 {
+	margin: 0 0 0.35rem;
+	color: #0f172a;
+	font-size: 1.25rem;
+}
+
+.historialHeader > div > p {
+	margin: 0;
+	color: #64748b;
+}
+
+.enlaceAccion {
+	color: #0f766e;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.enlaceAccion:hover {
+	text-decoration: underline;
+}
+
+.listaCitas,
+.listaNotas {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.cita {
+	padding: 1.25rem 0;
+	border-top: 1px solid #e2e8f0;
+}
+
+.fechaCita {
+	color: #0f172a;
+	font-weight: 650;
+}
+
+.profesionalCita {
+	margin: 0.35rem 0 0;
+	color: #64748b;
+}
+
+.estadoCita {
+	padding: 0.3rem 0.65rem;
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.estado_agendada {
+	color: #1d4ed8;
+	background: #eff6ff;
+}
+
+.estado_reprogramada {
+	color: #a16207;
+	background: #fefce8;
+}
+
+.estado_cancelada {
+	color: #b91c1c;
+	background: #fef2f2;
+}
+
+.estado_completada {
+	color: #15803d;
+	background: #f0fdf4;
+}
+
+.notasCita {
+	margin: 1rem 0 0;
+	color: #334155;
+	white-space: pre-wrap;
+}
+
+.notasClinicas {
+	padding: 1rem 0 0 1rem;
+	margin-top: 1rem;
+	border-left: 2px solid #ccfbf1;
+}
+
+.notasHeader h3 {
+	margin: 0;
+	color: #334155;
+	font-size: 0.95rem;
+}
+
+.listaNotas {
+	display: grid;
+	gap: 0.9rem;
+	margin-top: 0.75rem;
+}
+
+.listaNotas li {
+	color: #334155;
+}
+
+.listaNotas time {
+	color: #64748b;
+	font-size: 0.8rem;
+}
+
+.listaNotas p {
+	margin: 0.35rem 0 0;
+	white-space: pre-wrap;
+}
+
+.estadoVacio,
+.sinNotas {
+	margin: 0;
+	color: #64748b;
+}
+
+.error {
+	color: #b91c1c;
+}
+
+@media (max-width: 600px) {
+	.historial {
+		padding: 1rem;
+	}
+
+	.historialHeader,
+	.notasHeader {
+		align-items: flex-start;
+	}
+
+	.citaResumen {
+		align-items: flex-start;
+	}
+}
