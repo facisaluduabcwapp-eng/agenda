@@ -13,6 +13,7 @@ import AdminProfesionales from './pages/AdminProfesionales'
 import Citas from './pages/Citas'
 import CitaForm from './pages/CitaForm'
 import NotaCita from './pages/NotaCita'
+import CentroAyuda from './pages/CentroAyuda'
 import PendingApproval from './components/PendingApproval'
 import LoadingState from './components/ui/LoadingState'
 // Evita que alguien con sesión ya iniciada vea /login o /signup
@@ -118,6 +119,7 @@ function AppRoutes() {
 <Route path="/citas/nueva" element={<ProtectedRoute><CitaForm /></ProtectedRoute>} />
 <Route path="/citas/:id/editar" element={<ProtectedRoute><CitaForm /></ProtectedRoute>} />
 <Route path="/citas/:id/nota" element={<ProtectedRoute><NotaCita /></ProtectedRoute>} />
+<Route path="/ayuda" element={<ProtectedRoute><CentroAyuda /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -11,6 +11,7 @@
 .searchContainer {
   position: relative;
   width: 320px;
+  z-index: 5;
 }
 
 .searchInput {
@@ -21,6 +22,7 @@
   background-color: #f8fafc;
   font-size: 0.9rem;
   outline: none;
+  box-sizing: border-box;
 }
 
 .searchInput:focus {
@@ -34,6 +36,92 @@
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
+}
+
+.searchResults {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: min(440px, calc(100vw - 2rem));
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+}
+
+.searchMessage,
+.searchError {
+  margin: 0;
+  padding: 0.75rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.searchError {
+  color: #b91c1c;
+}
+
+.resultGroup + .resultGroup {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.resultGroup h2 {
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem;
+  color: #475569;
+  text-decoration: none;
+  border-radius: 7px;
+}
+
+.resultItem:hover,
+.resultItem:focus-visible {
+  color: #0f172a;
+  background: #f1f5f9;
+  outline: none;
+}
+
+.resultItem > svg {
+  flex: 0 0 auto;
+  color: #0f766e;
+}
+
+.resultItem span {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.resultItem strong,
+.resultItem small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resultItem strong {
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.resultItem small {
+  color: #64748b;
+  font-size: 0.75rem;
 }
 
 .userSection {
@@ -90,4 +178,23 @@
 .logoutBtn:hover {
   background-color: #f1f5f9;
   color: #ef4444;
+}
+
+@media (max-width: 700px) {
+  .header {
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+
+  .searchContainer {
+    width: min(320px, 45vw);
+  }
+
+  .userSection {
+    gap: 0.65rem;
+  }
+
+  .userName {
+    display: none;
+  }
 }

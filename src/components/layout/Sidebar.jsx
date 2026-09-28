@@ -63,9 +63,9 @@ export default function Sidebar() {
           </li>
         )}
         <li>
-          <a href="#ayuda" className={styles.navItem}>
+          <Link to="/ayuda" className={`${styles.navItem} ${isActive('/ayuda') ? styles.active : ''}`}>
             <span className={styles.navContent}><CircleHelp size={17} aria-hidden="true" /> Centro de ayuda</span>
-          </a>
+          </Link>
         </li>
       </ul>
     </aside>

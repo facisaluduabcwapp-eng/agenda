@@ -6,6 +6,7 @@ import { buildGoogleCalendarUrl } from '../lib/googleCalendar'
 import { enviarNotificacionCita } from '../lib/emailNotifications'
 import FormPage from '../components/layout/FormPage'
 import Button from '../components/ui/Button'
+import { CalendarPlus, ExternalLink, RefreshCw, Video } from 'lucide-react'
 
 function toDatetimeLocal(isoString) {
   if (!isoString) return ''
@@ -332,13 +333,17 @@ export default function CitaForm() {
             disabled={bloqueada}
             style={{ marginTop: '8px' }}
           >
-            {enlaceVideoconsulta ? '🔄 Regenerar enlace' : '📹 Generar enlace de videoconsulta'}
+            {enlaceVideoconsulta ? (
+              <><RefreshCw size={16} aria-hidden="true" /> Regenerar enlace</>
+            ) : (
+              <><Video size={16} aria-hidden="true" /> Generar enlace de videoconsulta</>
+            )}
           </Button>
 
           {enlaceVideoconsulta && (
             <p style={{ marginTop: '6px', fontSize: '0.85rem' }}>
-              <a href={enlaceVideoconsulta} target="_blank" rel="noreferrer" style={{ color: '#7c3aed', fontWeight: 600 }}>
-                Abrir videoconsulta ↗
+              <a href={enlaceVideoconsulta} target="_blank" rel="noreferrer" style={{ color: '#7c3aed', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                Abrir videoconsulta <ExternalLink size={14} aria-hidden="true" />
               </a>
             </p>
           )}
@@ -392,7 +397,8 @@ export default function CitaForm() {
             disabled={bloqueada || !googleCalendarUrl}
             style={{ marginTop: '8px' }}
           >
-            📅 Agregar a Google Calendar
+            <CalendarPlus size={16} aria-hidden="true" />
+            Agregar a Google Calendar
           </Button>
         </div>
 
